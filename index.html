@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>OBS Glass Neon Counter</title>
+    <title>OBS Glass Counter</title>
     <!-- Incluindo a biblioteca ComfyJS para os comandos do chat da Twitch -->
     <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
     <style>
@@ -14,10 +14,10 @@
             margin: 0;
             padding: 20px;
             display: flex;
-            justify-content: flex-start; /* Alinhado à esquerda como na imagem original */
+            justify-content: flex-start;
         }
 
-        /* CONTAINER PRINCIPAL: Efeito Glassmorphism + Borda Neon */
+        /* CONTAINER PRINCIPAL: Apenas Glassmorphism limpo */
         .container {
             display: flex;
             gap: 25px;
@@ -25,22 +25,16 @@
             border-radius: 16px;
             width: fit-content;
             
-            /* --- EFEITO GLASS (VIDRO) --- */
-            background: rgba(15, 15, 25, 0.5); /* Fundo escuro semi-transparente */
-            backdrop-filter: blur(12px); /* O desfoque atrás do elemento (funciona no OBS) */
-            -webkit-backdrop-filter: blur(12px); /* Suporte para navegadores baseados em WebKit */
+            /* Efeito Glass (Vidro Fosco) */
+            background: rgba(15, 15, 25, 0.65); /* Fundo escuro semi-transparente */
+            backdrop-filter: blur(12px); 
+            -webkit-backdrop-filter: blur(12px); 
             
-            /* --- EFEITO NEON NAS BORDAS --- */
-            /* Borda base fina */
-            border: 2px solid rgba(139, 92, 246, 0.6); /* Um roxo base */
+            /* Borda sutil e translúcida, sem neon */
+            border: 1px solid rgba(255, 255, 255, 0.1); 
             
-            /* Múltiplas camadas de sombra para o brilho neon difuso */
-            box-shadow: 
-                0 0 8px rgba(139, 92, 246, 0.8),  /* Brilho interno roxo (roxo/azul) */
-                0 0 15px rgba(139, 92, 246, 0.6), /* Brilho médio roxo */
-                0 0 25px rgba(217, 70, 239, 0.4), /* Brilho externo rosa (pink) */
-                0 0 40px rgba(59, 130, 246, 0.3),  /* Brilho distante azul (blue) */
-                inset 0 0 10px rgba(139, 92, 246, 0.4); /* Brilho interno sutil */
+            /* Sombra escura simples para dar profundidade e destacar do fundo do jogo */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
         }
 
         /* Estilização individual das estatísticas */
@@ -50,43 +44,38 @@
             position: relative;
         }
 
-        /* Rótulos (Win, Loss, WR) com texto sutilmente neon */
+        /* Rótulos (Win, Loss, WR) */
         .label {
             font-size: 11px;
             text-transform: uppercase;
-            color: #e0e7ff; /* Um branco azulado */
+            color: #d1d5db;
             letter-spacing: 1.5px;
             margin-bottom: 3px;
-            text-shadow: 0 0 3px rgba(139, 92, 246, 0.8); /* Glow roxo no texto */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
         }
 
         /* Os valores numéricos grandes */
         .val {
             font-size: 32px;
             font-weight: 800;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9); /* Sombra escura para leitura no OBS */
         }
 
-        /* Win: Verde Neon Brilhante */
+        /* Cores sólidas e limpas para os números */
         .win { 
             color: #4ade80; 
-            text-shadow: 0 0 10px rgba(74, 222, 128, 0.9); 
         }
 
-        /* Loss: Vermelho/Rosa Neon Intenso */
         .lose { 
             color: #f87171; 
-            text-shadow: 0 0 10px rgba(248, 113, 113, 0.9); 
         }
 
-        /* Win Rate: Usando o tema Neon do container (Roxo/Rosa) */
         .wr { 
-            color: #d946ef; /* Magenta/Rosa forte */
-            text-shadow: 0 0 12px rgba(217, 70, 239, 1); 
+            color: #fbbf24; /* Amarelo/Dourado padrão */
         }
     </style>
 </head>
 <body>
-    <!-- Estrutura HTML (igual à anterior) -->
     <div class="container">
         <div class="stat"><div class="label">Wins</div><div id="w" class="val win">0</div></div>
         <div class="stat"><div class="label">Loss</div><div id="l" class="val lose">0</div></div>
@@ -97,7 +86,7 @@
         let wins = 0, loses = 0;
         
         // --- CONFIGURAÇÃO ---
-        const channel = "reunny"; // canal na Twitch
+        const channel = "reunny"; // Mude para o nome do seu canal na Twitch
 
         function update() {
             const total = wins + loses;
