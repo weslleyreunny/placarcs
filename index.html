@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>OBS Glass Neon Counter</title>
+    <!-- Incluindo a biblioteca ComfyJS para os comandos do chat da Twitch -->
+    <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
+    <style>
+        /* Base transparente e fonte limpa */
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: white;
+            background: transparent; /* Importante para o OBS */
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: flex-start; /* Alinhado à esquerda como na imagem original */
+        }
+
+        /* CONTAINER PRINCIPAL: Efeito Glassmorphism + Borda Neon */
+        .container {
+            display: flex;
+            gap: 25px;
+            padding: 15px 25px;
+            border-radius: 16px;
+            width: fit-content;
+            
+            /* --- EFEITO GLASS (VIDRO) --- */
+            background: rgba(15, 15, 25, 0.5); /* Fundo escuro semi-transparente */
+            backdrop-filter: blur(12px); /* O desfoque atrás do elemento (funciona no OBS) */
+            -webkit-backdrop-filter: blur(12px); /* Suporte para navegadores baseados em WebKit */
+            
+            /* --- EFEITO NEON NAS BORDAS --- */
+            /* Borda base fina */
+            border: 2px solid rgba(139, 92, 246, 0.6); /* Um roxo base */
+            
+            /* Múltiplas camadas de sombra para o brilho neon difuso */
+            box-shadow: 
+                0 0 8px rgba(139, 92, 246, 0.8),  /* Brilho interno roxo (roxo/azul) */
+                0 0 15px rgba(139, 92, 246, 0.6), /* Brilho médio roxo */
+                0 0 25px rgba(217, 70, 239, 0.4), /* Brilho externo rosa (pink) */
+                0 0 40px rgba(59, 130, 246, 0.3),  /* Brilho distante azul (blue) */
+                inset 0 0 10px rgba(139, 92, 246, 0.4); /* Brilho interno sutil */
+        }
+
+        /* Estilização individual das estatísticas */
+        .stat {
+            text-align: center;
+            min-width: 60px;
+            position: relative;
+        }
+
+        /* Rótulos (Win, Loss, WR) com texto sutilmente neon */
+        .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #e0e7ff; /* Um branco azulado */
+            letter-spacing: 1.5px;
+            margin-bottom: 3px;
+            text-shadow: 0 0 3px rgba(139, 92, 246, 0.8); /* Glow roxo no texto */
+        }
+
+        /* Os valores numéricos grandes */
+        .val {
+            font-size: 32px;
+            font-weight: 800;
+        }
+
+        /* Win: Verde Neon Brilhante */
+        .win { 
+            color: #4ade80; 
+            text-shadow: 0 0 10px rgba(74, 222, 128, 0.9); 
+        }
+
+        /* Loss: Vermelho/Rosa Neon Intenso */
+        .lose { 
+            color: #f87171; 
+            text-shadow: 0 0 10px rgba(248, 113, 113, 0.9); 
+        }
+
+        /* Win Rate: Usando o tema Neon do container (Roxo/Rosa) */
+        .wr { 
+            color: #d946ef; /* Magenta/Rosa forte */
+            text-shadow: 0 0 12px rgba(217, 70, 239, 1); 
+        }
+    </style>
+</head>
+<body>
+    <!-- Estrutura HTML (igual à anterior) -->
+    <div class="container">
+        <div class="stat"><div class="label">Wins</div><div id="w" class="val win">0</div></div>
+        <div class="stat"><div class="label">Loss</div><div id="l" class="val lose">0</div></div>
+        <div class="stat"><div class="label">WR</div><div id="wr" class="val wr">0%</div></div>
+    </div>
+
+    <script>
+        let wins = 0, loses = 0;
+        
+        // --- CONFIGURAÇÃO ---
+        const channel = "reunny"; // canal na Twitch
+
+        function update() {
+            const total = wins + loses;
+            const rate = total === 0 ? 0 : Math.round((wins / total) * 100);
+            document.getElementById('w').innerText = wins;
+            document.getElementById('l').innerText = loses;
+            document.getElementById('wr').innerText = rate + '%';
+        }
+
+        ComfyJS.onCommand = (user, command, message, flags) => {
+            // Apenas o streamer (broadcaster) ou moderadores podem mudar
+            if (flags.broadcaster || flags.mod) {
+                if (command === "win") { wins++; update(); }
+                if (command === "loss") { loses++; update(); }
+                if (command === "reset") { wins = 0; loses = 0; update(); }
+            }
+        };
+        ComfyJS.Init(channel);
+    </script>
+</body>
+</html>
