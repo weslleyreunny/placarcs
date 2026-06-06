@@ -3,48 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <title>OBS Glass Counter</title>
-    <!-- Incluindo a biblioteca ComfyJS para os comandos do chat da Twitch -->
     <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <style>
-        /* Base transparente e fonte limpa */
         body {
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             color: white;
-            background: transparent; /* Importante para o OBS */
+            background: transparent;
             margin: 0;
             padding: 20px;
             display: flex;
             justify-content: flex-start;
         }
 
-        /* CONTAINER PRINCIPAL: Apenas Glassmorphism limpo */
         .container {
             display: flex;
             gap: 25px;
             padding: 15px 25px;
             border-radius: 16px;
             width: fit-content;
-            
-            /* Efeito Glass (Vidro Fosco) */
-            background: rgba(15, 15, 25, 0.65); /* Fundo escuro semi-transparente */
+            background: rgba(15, 15, 25, 0.65);
             backdrop-filter: blur(12px); 
             -webkit-backdrop-filter: blur(12px); 
-            
-            /* Borda sutil e translúcida, sem neon */
             border: 1px solid rgba(255, 255, 255, 0.1); 
-            
-            /* Sombra escura simples para dar profundidade e destacar do fundo do jogo */
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
         }
 
-        /* Estilização individual das estatísticas */
         .stat {
             text-align: center;
             min-width: 60px;
             position: relative;
         }
 
-        /* Rótulos (Win, Loss, WR) */
         .label {
             font-size: 11px;
             text-transform: uppercase;
@@ -54,54 +44,107 @@
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
         }
 
-        /* Os valores numéricos grandes */
         .val {
             font-size: 32px;
             font-weight: 800;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9); /* Sombra escura para leitura no OBS */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
+            display: inline-block;
         }
 
-        /* Cores sólidas e limpas para os números */
-        .win { 
-            color: #4ade80; 
-        }
-
-        .lose { 
-            color: #f87171; 
-        }
-
-        .wr { 
-            color: #fbbf24; /* Amarelo/Dourado padrão */
-        }
+        .win { color: #4ade80; }
+        .lose { color: #f87171; }
+        .tie { color: #94a3b8; }
+        .wr { color: #fbbf24; }
+        .streak { color: #c084fc; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="stat"><div class="label">Wins</div><div id="w" class="val win">0</div></div>
-        <div class="stat"><div class="label">Loss</div><div id="l" class="val lose">0</div></div>
-        <div class="stat"><div class="label">WR</div><div id="wr" class="val wr">0%</div></div>
+        <div class="stat"><div class="label">Vitórias</div><div id="w" class="val win">0</div></div>
+        <div class="stat"><div class="label">Derrotas</div><div id="l" class="val lose">0</div></div>
+        <div class="stat"><div class="label">Empates</div><div id="t" class="val tie">0</div></div>
+        <div class="stat"><div class="label">% Vit</div><div id="wr" class="val wr">0%</div></div>
+        <div class="stat"><div class="label">Sequência</div><div id="s" class="val streak">0</div></div>
     </div>
 
     <script>
-        let wins = 0, loses = 0;
+        let wins = 0, loses = 0, ties = 0, currentStreak = 0, streakType = "";
         
-        // --- CONFIGURAÇÃO ---
-        const channel = "reunny"; // Mude para o nome do seu canal na Twitch
+        const channel = "SEU_CANAL_AQUI";
+
+        function animateValue(id) {
+            gsap.fromTo(id, 
+                { scale: 1.6 }, 
+                { scale: 1, duration: 0.5, ease: "back.out(1.7)" }
+            );
+        }
 
         function update() {
-            const total = wins + loses;
+            const total = wins + loses + ties;
             const rate = total === 0 ? 0 : Math.round((wins / total) * 100);
+            
             document.getElementById('w').innerText = wins;
             document.getElementById('l').innerText = loses;
+            document.getElementById('t').innerText = ties;
             document.getElementById('wr').innerText = rate + '%';
+            
+            let streakText = currentStreak === 0 ? "0" : currentStreak + streakType;
+            document.getElementById('s').innerText = streakText;
+            
+            if (streakType === "V") {
+                document.getElementById('s').style.color = "#4ade80";
+            } else if (streakType === "D") {
+                document.getElementById('s').style.color = "#f87171";
+            } else if (streakType === "E") {
+                document.getElementById('s').style.color = "#94a3b8";
+            } else {
+                document.getElementById('s').style.color = "#c084fc";
+            }
         }
 
         ComfyJS.onCommand = (user, command, message, flags) => {
-            // Apenas o streamer (broadcaster) ou moderadores podem mudar
             if (flags.broadcaster || flags.mod) {
-                if (command === "win") { wins++; update(); }
-                if (command === "loss") { loses++; update(); }
-                if (command === "reset") { wins = 0; loses = 0; update(); }
+                if (command === "v" || command === "vitoria") { 
+                    wins++; 
+                    if(streakType === "V") {
+                        currentStreak++;
+                    } else {
+                        currentStreak = 1;
+                        streakType = "V";
+                    }
+                    update(); 
+                    animateValue("#w");
+                    animateValue("#s");
+                }
+                if (command === "d" || command === "derrota") { 
+                    loses++; 
+                    if(streakType === "D") {
+                        currentStreak++;
+                    } else {
+                        currentStreak = 1;
+                        streakType = "D";
+                    }
+                    update(); 
+                    animateValue("#l");
+                    animateValue("#s");
+                }
+                if (command === "e" || command === "empate") { 
+                    ties++; 
+                    if(streakType === "E") {
+                        currentStreak++;
+                    } else {
+                        currentStreak = 1;
+                        streakType = "E";
+                    }
+                    update(); 
+                    animateValue("#t");
+                    animateValue("#s");
+                }
+                if (command === "reset") { 
+                    wins = 0; loses = 0; ties = 0; currentStreak = 0; streakType = ""; 
+                    update(); 
+                    animateValue(".val");
+                }
             }
         };
         ComfyJS.Init(channel);
